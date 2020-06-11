@@ -377,8 +377,10 @@ class FlowController(BaseController):
         """
         return {"sum": "Sum", "average": "Average"}
 
-    # @expose_fragment("flow/type2component/datatype2select_simple")
-    def getfiltereddatatypes(self, name, parent_div, tree_session_key, filters):
+    @cherrypy.expose
+    @handle_error(redirect=False)
+    @check_user
+    def get_filtered_datatypes(self, name, parent_div, tree_session_key, filters):
         # TODO: fix this use-case
         """
         Given the name from the input tree, the dataType required and a number of
