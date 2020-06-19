@@ -38,7 +38,7 @@ from tvb.adapters.simulator.noise_forms import get_form_for_noise
 from tvb.adapters.simulator.range_parameters import SimulatorRangeParameters
 from tvb.adapters.simulator.simulator_adapter import SimulatorAdapterForm
 from tvb.adapters.simulator.simulator_fragments import *
-from tvb.adapters.simulator.monitor_forms import get_form_for_monitor
+from tvb.adapters.simulator.monitor_forms import get_form_for_monitor, SpatialAverageMonitorForm
 from tvb.adapters.simulator.integrator_forms import get_form_for_integrator
 from tvb.adapters.simulator.coupling_forms import get_form_for_coupling
 from tvb.core.entities.file.simulator.view_model import SimulatorAdapterModel
@@ -56,7 +56,7 @@ from tvb.interfaces.web.controllers.burst.base_controller import BurstBaseContro
 from tvb.interfaces.web.controllers.flow_controller import FlowController
 from tvb.interfaces.web.controllers.decorators import *
 from tvb.simulator.integrators import IntegratorStochastic
-from tvb.simulator.monitors import Bold, Raw
+from tvb.simulator.monitors import Bold, Projection, Raw, SpatialAverage
 from tvb.simulator.noise import Additive
 
 GET_REQUEST = 'GET'
@@ -698,6 +698,14 @@ class SimulatorController(BurstBaseController):
         return first_monitor_index, last_loaded_fragment_url
 
     @staticmethod
+    def _check_cortical_for_spatial_average(connectivity, form):
+        connectivity_index = ABCAdapter.load_entity_by_gid(connectivity)
+        connectivity = h5.load_from_index(connectivity_index)
+
+        if connectivity.cortical is None or len(set(connectivity.cortical)) != 2:
+            form.default_mask.disabled = True
+
+    @staticmethod
     def _prepare_final_fragment(session_stored_simulator, rendering_rules):
         session_stored_burst = common.get_from_session(common.KEY_BURST_CONFIG)
         default_simulation_name, simulation_number = BurstService.prepare_name(session_stored_burst,
@@ -748,6 +756,9 @@ class SimulatorController(BurstBaseController):
         monitor = session_stored_simulator.monitors[first_monitor_index]
         form = get_form_for_monitor(type(monitor))(indexes, '', common.get_current_project().id)
         form.fill_from_trait(monitor)
+
+        if isinstance(monitor, SpatialAverage):
+            self._check_cortical_for_spatial_average(session_stored_simulator.connectivity, form)
 
         rendering_rules = SimulatorFragmentRenderingRules(form, last_loaded_fragment_url,
                                                           SimulatorWizzardURLs.SET_MONITORS_URL, is_simulator_copy,
@@ -813,6 +824,10 @@ class SimulatorController(BurstBaseController):
             indexes = self._get_variables_of_interest_indexes(all_variables, chosen_variables)
             form = get_form_for_monitor(type(monitor))(indexes)
             form.fill_from_post(data)
+
+            if isinstance(form, SpatialAverageMonitorForm) and form.default_mask.data is None:
+                form.default_mask.data = 'hemispheres'
+
             form.fill_trait(monitor)
 
             if isinstance(monitor, Bold):
