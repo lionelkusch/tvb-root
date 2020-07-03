@@ -58,7 +58,8 @@ from tvb.interfaces.web.controllers import common
 from tvb.interfaces.web.controllers.autologging import traced
 from tvb.interfaces.web.controllers.base_controller import BaseController
 from tvb.interfaces.web.controllers.common import InvalidFormValues
-from tvb.interfaces.web.controllers.decorators import expose_page, settings, context_selected, expose_numpy_array
+from tvb.interfaces.web.controllers.decorators import expose_page, settings, context_selected, expose_numpy_array, \
+    expose_fragment, handle_error, check_user, expose_json
 from tvb.interfaces.web.entities.context_selected_adapter import SelectedAdapterContext
 
 KEY_CONTENT = ABCDisplayer.KEY_CONTENT
@@ -240,7 +241,7 @@ class FlowController(BaseController):
             template_specification[common.KEY_DISPLAY_MENU] = True
             template_specification[common.KEY_BACK_PAGE] = back_page_link
 
-        common.add2session(KEY_ADAPTER, adapter_key)
+        common.add2session(common.KEY_ADAPTER, adapter_key)
 
         template_specification[common.KEY_ADAPTER] = adapter_key
         template_specification[ABCDisplayer.KEY_IS_ADAPTER] = True
@@ -387,7 +388,7 @@ class FlowController(BaseController):
         Given the name from the input tree, the dataType required and a number of
         filters, return the available dataType that satisfy the conditions imposed.
         """
-        algorithm_id = common.get_from_session(KEY_ADAPTER)
+        algorithm_id = common.get_from_session(common.KEY_ADAPTER)
         algorithm = self.algorithm_service.get_algorithm_by_identifier(algorithm_id)
         adapter_instance = ABCAdapter.build_adapter(algorithm)
 
