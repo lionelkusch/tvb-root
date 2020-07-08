@@ -42,9 +42,11 @@ class FcdIndex(DataTypeMatrix):
     source = relationship(TimeSeriesIndex, foreign_keys=fk_source_gid, primaryjoin=TimeSeriesIndex.gid == fk_source_gid)
 
     labels_ordering = Column(String)
+    labels_dimensions = Column(String)
 
     def fill_from_has_traits(self, datatype):
         # type: (Fcd)  -> None
         super(FcdIndex, self).fill_from_has_traits(datatype)
         self.labels_ordering = json.dumps(datatype.labels_ordering)
+        self.labels_dimensions = json.dumps(datatype.labels_dimensions)
         self.fk_source_gid = datatype.source.gid.hex

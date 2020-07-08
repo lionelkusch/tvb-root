@@ -39,6 +39,7 @@ class CrossCorrelationH5(H5File):
         self.source = Reference(CrossCorrelation.source, self)
         self.time = DataSet(CrossCorrelation.time, self)
         self.labels_ordering = Json(CrossCorrelation.labels_ordering, self)
+        self.labels_dimensions = Json(CrossCorrelation.labels_dimensions, self)
 
     def read_data_shape(self):
         """

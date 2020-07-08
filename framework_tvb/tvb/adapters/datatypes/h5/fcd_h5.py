@@ -41,3 +41,4 @@ class FcdH5(DataTypeMatrixH5):
         self.sw = Scalar(Fcd.sw, self)
         self.sp = Scalar(Fcd.sp, self)
         self.labels_ordering = Json(Fcd.labels_ordering, self)
+        self.labels_dimensions = Json(Fcd.labels_dimensions, self)

@@ -71,6 +71,12 @@ class Fcd(HasTraits):
         default=("Time", "Time", "State Variable", "Mode"),
         doc="""List of strings representing names of each data dimension""")
 
+    labels_dimensions = Attr(
+        field_type=dict,
+        default={},
+        label="Specific labels for each dimension for the data in this object.",
+        doc=""" A dictionary containing mappings of the form {'dimension_name' : [labels for this dimension] }""")
+
     def summary_info(self):
         """
         Gather scientifically interesting summary information from an instance of this datatype.

@@ -208,22 +208,24 @@ class FunctionalConnectivityDynamicsAdapter(ABCAsynchronous):
         return 0
 
     @staticmethod
-    def _populate_fcd_index(fcd_index, source_gid, fcd_data, metadata):
-        fcd_index.fk_source_gid = source_gid
+    def _populate_fcd_index(fcd_index, input_time_series_index, fcd_data, metadata):
+        fcd_index.fk_source_gid = input_time_series_index.gid
         fcd_index.labels_ordering = json.dumps(Fcd.labels_ordering.default)
+        fcd_index.labels_dimensions = input_time_series_index.labels_dimensions
         fcd_index.ndim = fcd_data.ndim
         fcd_index.array_data_min = metadata.min
         fcd_index.array_data_max = metadata.max
         fcd_index.array_data_mean = metadata.mean
 
     @staticmethod
-    def _populate_fcd_h5(fcd_h5, fcd_data, gid, source_gid, sw, sp):
+    def _populate_fcd_h5(fcd_h5, fcd_data, fcd_index, source_gid, sw, sp):
         fcd_h5.array_data.store(fcd_data)
-        fcd_h5.gid.store(uuid.UUID(gid))
+        fcd_h5.gid.store(uuid.UUID(fcd_index.gid))
         fcd_h5.source.store(uuid.UUID(source_gid))
         fcd_h5.sw.store(sw)
         fcd_h5.sp.store(sp)
         fcd_h5.labels_ordering.store(json.dumps(Fcd.labels_ordering.default))
+        fcd_h5.labels_dimensions.store(fcd_index.labels_dimensions)
         return fcd_h5.array_data.get_cached_metadata()
 
     def launch(self, view_model):
@@ -247,9 +249,10 @@ class FunctionalConnectivityDynamicsAdapter(ABCAsynchronous):
         fcd_index = FcdIndex()
         fcd_h5_path = h5.path_for(self.storage_path, FcdH5, fcd_index.gid)
         with FcdH5(fcd_h5_path) as fcd_h5:
-            fcd_array_metadata = self._populate_fcd_h5(fcd_h5, fcd, fcd_index.gid, self.input_time_series_index.gid,
+            fcd_array_metadata = self._populate_fcd_h5(fcd_h5, fcd, fcd_index, self.input_time_series_index.gid,
                                                        view_model.sw, view_model.sp)
-        self._populate_fcd_index(fcd_index, self.input_time_series_index.gid, fcd, fcd_array_metadata)
+        self._populate_fcd_index(fcd_index, self.input_time_series_index, fcd, fcd_array_metadata)
+        fcd_index.labels_dimensions = self.input_time_series_index.labels_dimensions
         result.append(fcd_index)
 
         if np.amax(fcd_segmented) == 1.1:
@@ -257,10 +260,10 @@ class FunctionalConnectivityDynamicsAdapter(ABCAsynchronous):
             result_fcd_segmented_h5_path = h5.path_for(self.storage_path, FcdH5, result_fcd_segmented_index.gid)
             with FcdH5(result_fcd_segmented_h5_path) as result_fcd_segmented_h5:
                 fcd_segmented_metadata = self._populate_fcd_h5(result_fcd_segmented_h5, fcd_segmented,
-                                                               result_fcd_segmented_index.gid,
+                                                               result_fcd_segmented_index,
                                                                self.input_time_series_index.gid, view_model.sw,
                                                                view_model.sp)
-            self._populate_fcd_index(result_fcd_segmented_index, self.input_time_series_index.id, fcd_segmented,
+            self._populate_fcd_index(result_fcd_segmented_index, self.input_time_series_index, fcd_segmented,
                                      fcd_segmented_metadata)
             result.append(result_fcd_segmented_index)
 

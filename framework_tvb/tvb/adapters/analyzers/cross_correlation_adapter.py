@@ -177,6 +177,7 @@ class CrossCorrelateAdapter(ABCAsynchronous):
             small_ts.sample_period_unit = ts_h5.sample_period_unit.load()
             partial_cross_corr = None
             labels_ordering = ts_h5.labels_ordering.load()
+            labels_dimensions = ts_h5.labels_dimensions.load()
             for var in range(self.input_shape[1]):
                 node_slice[1] = slice(var, var + 1)
                 small_ts.data = ts_h5.read_data_slice(tuple(node_slice))
@@ -189,11 +190,13 @@ class CrossCorrelateAdapter(ABCAsynchronous):
         cross_corr_labels_ordering[1] = labels_ordering[2]
         cross_corr_labels_ordering[2] = labels_ordering[2]
         cross_corr_h5.labels_ordering.store(json.dumps(tuple(cross_corr_labels_ordering)))
+        cross_corr_h5.labels_dimensions.store(json.dumps(labels_dimensions))
         cross_corr_h5.source.store(uuid.UUID(self.input_time_series_index.gid))
         cross_corr_h5.gid.store(uuid.UUID(cross_corr_index.gid))
 
         cross_corr_index.fk_source_gid = self.input_time_series_index.gid
         cross_corr_index.labels_ordering = cross_corr_h5.labels_ordering.load()
+        cross_corr_index.labels_dimensions = cross_corr_h5.labels_dimensions.load()
         cross_corr_index.type = type(cross_corr_index).__name__
         cross_corr_index.array_data_min = ts_array_metadata.min
         cross_corr_index.array_data_max = ts_array_metadata.max
